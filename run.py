@@ -42,7 +42,7 @@ def main():
 
     # Verifica se tem API key
     api_key = os.getenv("OPENCODE_API_KEY", "")
-    if not api_key or api_key.startswith("sk-Qww"):
+    if not api_key or api_key == "sk-Qw...SuaChaveAqui...ZJW":
         print("ERRO: OPENCODE_API_KEY não configurada!")
         print("Copie .env.example para .env e preencha a chave.")
         sys.exit(1)

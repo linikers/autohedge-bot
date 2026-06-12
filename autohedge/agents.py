@@ -24,7 +24,7 @@ from autohedge.prompts import (
 
 OPENCODE_BASE_URL = os.getenv("OPENCODE_BASE_URL", "https://opencode.ai/zen/go/v1")
 OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY", "")
-MODEL = os.getenv("AUTOHEDGE_MODEL", "deepseek-chat")
+MODEL = os.getenv("AUTOHEDGE_MODEL", "deepseek-v4-flash")
 
 _NOW = datetime.now()
 _DATE_TIME_LINE = _NOW.strftime("%A, %B %d, %Y at %H:%M")
@@ -65,8 +65,7 @@ class Agent:
             resp = client.chat.completions.create(
                 model=MODEL,
                 messages=messages,
-                temperature=0.3,
-                max_tokens=4000,
+                max_tokens=8000,
             )
             content = resp.choices[0].message.content or ""
 
