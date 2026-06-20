@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional
 from openai import OpenAI
 
 from autohedge.market_data import fetch_all_market_data
+from autohedge.indicators import fetch_all_indicators
 from autohedge.prompts import (
     DIRECTOR_PROMPT,
     EXECUTION_PROMPT,
@@ -179,26 +180,34 @@ def run_full_cycle(task: str) -> Dict[str, Any]:
     """
     from loguru import logger
 
-    # 1. Busca dados reais de mercado
+    # 1. Busca dados reais de mercado + indicadores técnicos
     logger.info("Buscando dados reais de mercado...")
     market_data = fetch_all_market_data()
     logger.success(f"Dados obtidos: SOL ${_extract_sol_price(market_data)}")
+
+    logger.info("Calculando indicadores técnicos...")
+    indicators = fetch_all_indicators()
+    logger.success("Indicadores calculados (RSI, MACD, Bollinger, etc)")
+
+    # Combinar dados de mercado + indicadores
+    full_data = market_data + "\n\n" + indicators
 
     results: Dict[str, Any] = {
         "task": task,
         "timestamp": _NOW.isoformat(),
         "market_data_snapshot": market_data,
+        "indicators_snapshot": indicators,
         "steps": {},
     }
 
-    # 2. Director gera tese (com dados reais + retry)
+    # 2. Director gera tese (com dados reais + indicadores + retry)
     director_output = ""
     for attempt in range(MAX_DIRECTOR_RETRIES + 1):
         logger.info(f"Director Agent: gerando tese de mercado (tentativa {attempt + 1})...")
         director_prompt = (
             f"Task: {task}\n\n"
-            f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
-            f"Analise os dados REAIS acima. Use os preços e variações fornecidos."
+            f"## DADOS REAIS DE MERCADO:\n{full_data}\n\n"
+            f"Analise os dados REAIS acima. Use os preços, indicadores e níveis fornecidos. NÃO invente valores."
         )
         director_output = director_agent.run(director_prompt)
 
@@ -212,36 +221,37 @@ def run_full_cycle(task: str) -> Dict[str, Any]:
 
     results["steps"]["director"] = director_output
 
-    # 3. Quant analisa (com dados reais)
+    # 3. Quant analisa (com dados reais + indicadores)
     logger.info("Quant Agent: analisando...")
     quant_prompt = (
-        f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+        f"## DADOS REAIS DE MERCADO:\n{full_data}\n\n"
         f"## Tese do Director:\n{director_output}\n\n"
-        f"Faça análise quantitativa usando os preços REAIS fornecidos acima."
+        f"Faça análise quantitativa usando os indicadores REAIS fornecidos acima (RSI, MACD, Bollinger, etc)."
+        f" NÃO invente valores — use os dados calculados."
     )
     quant_output = quant_agent.run(quant_prompt)
     results["steps"]["quant"] = quant_output
     logger.success("Quant concluído")
 
-    # 4. Risk avalia (com contexto do portfólio)
+    # 4. Risk avalia (com contexto do portfólio + indicadores)
     logger.info("Risk Manager: avaliando risco...")
     risk_prompt = (
-        f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+        f"## DADOS REAIS DE MERCADO:\n{full_data}\n\n"
         f"## Tese do Director:\n{director_output}\n\n"
         f"## Análise Quantitativa:\n{quant_output}\n\n"
-        f"Avalie o risco considerando o saldo REAL da carteira e o histórico de trades."
+        f"Avalie o risco considerando o saldo REAL da carteira, histórico de trades, e indicadores técnicos."
     )
     risk_output = risk_agent.run(risk_prompt)
     results["steps"]["risk"] = risk_output
     logger.success("Risk Manager concluído")
 
-    # 5. Execution gera recomendação (com preço real)
+    # 5. Execution gera recomendação (com preço real + indicadores)
     logger.info("Execution Agent: gerando recomendação...")
     exec_prompt = (
-        f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+        f"## DADOS REAIS DE MERCADO:\n{full_data}\n\n"
         f"## Tese do Director:\n{director_output}\n\n"
         f"## Avaliação de Risco:\n{risk_output}\n\n"
-        f"Gere a ordem de trade usando o preço REAL atual."
+        f"Gere a ordem de trade usando o preço REAL atual e os indicadores técnicos."
     )
     exec_output = execution_agent.run(exec_prompt)
     results["steps"]["execution"] = exec_output
