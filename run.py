@@ -106,9 +106,13 @@ def main():
                     if direction == "sell":
                         print(f"   💱 Executando swap SOL → USDC (${max_trade})...")
                         trade_result = swap_sol_to_usdc(amount_usd=max_trade, keypair=kp)
+                        trade_result["direction"] = "sell"
+                        trade_result["type"] = "directional"
                     else:
                         print(f"   💱 Executando swap USDC → SOL (${max_trade})...")
                         trade_result = swap_usdc_to_sol(amount_usd=max_trade, keypair=kp)
+                        trade_result["direction"] = "buy"
+                        trade_result["type"] = "directional"
                     print(f"   Resultado: {trade_result.get('status', 'unknown')}")
                     if trade_result.get("signature"):
                         print(f"   TX: https://solscan.io/tx/{trade_result['signature']}")
