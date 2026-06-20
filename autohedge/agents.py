@@ -1,23 +1,24 @@
 """
 AutoHedge Bot - Agentes adaptados pra rodar com DeepSeek via OpenCode API.
-Substitui a dependência da library `swarms` (OpenAI) por chamadas diretas
-a API compatível com OpenAI.
+Pipeline: Director → Quant → Risk → Execution
+Injeta dados reais de mercado antes de cada ciclo.
 """
 
 import json
 import os
 import re
+import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 from openai import OpenAI
 
+from autohedge.market_data import fetch_all_market_data
 from autohedge.prompts import (
     DIRECTOR_PROMPT,
     EXECUTION_PROMPT,
     QUANT_PROMPT,
     RISK_PROMPT,
-    SENTIMENT_PROMPT,
 )
 
 # ── Config ───────────────────────────────────────────────────────────
@@ -29,6 +30,9 @@ MODEL = os.getenv("AUTOHEDGE_MODEL", "deepseek-v4-flash")
 _NOW = datetime.now()
 _DATE_TIME_LINE = _NOW.strftime("%A, %B %d, %Y at %H:%M")
 _SYSTEM_SUFFIX = f"\n\nCurrent date and time (use this as now): {_DATE_TIME_LINE.strip()}"
+
+# Retry config
+MAX_DIRECTOR_RETRIES = 2
 
 
 # ── Client ───────────────────────────────────────────────────────────
@@ -101,54 +105,67 @@ class Agent:
         return resp.choices[0].message.content or ""
 
 
-# ── Agentes especializados ───────────────────────────────────────────
-
-sentiment_agent = Agent(
-    name="Sentiment-Agent",
-    system_prompt=SENTIMENT_PROMPT,
-)
+# ── Agentes especializados (crypto-specific) ────────────────────────
 
 risk_agent = Agent(
     name="Risk-Manager",
     system_prompt=RISK_PROMPT.strip()
-    + "\n\nWhen you receive a message, it will contain:\n"
-    "Stock, Thesis, Quant Analysis.\n\n"
-    "Provide risk assessment including:\n"
-    "1. Recommended position size\n"
-    "2. Maximum drawdown risk\n"
-    "3. Market risk exposure\n"
-    "4. Overall risk score",
+    + "\n\nYou are evaluating RISK for a CRYPTO PORTFOLIO (Solana/SOL)."
+    "\nWhen you receive a message, it will contain:"
+    "\n- Real market data (prices, volume, Fear & Greed)"
+    "\n- Portfolio state (SOL/USDC balances, trade history)"
+    "\n- Thesis from Director + Quant Analysis"
+    "\n\nProvide risk assessment including:"
+    "\n1. Recommended position size (considering current wallet balance)"
+    "\n2. Maximum drawdown risk"
+    "\n3. Market risk exposure"
+    "\n4. Overall risk score"
+    "\n5. CLEAR VERDICT: 'APPROVED' or 'REJECTED' with reason",
 )
 
 execution_agent = Agent(
     name="Execution-Agent",
     system_prompt=EXECUTION_PROMPT.strip()
-    + "\n\nWhen you receive a message, it will contain:\n"
-    "Stock, Thesis, Risk Assessment.\n\n"
-    "Generate trade order including:\n"
-    "1. Order type (market/limit)\n"
-    "2. Quantity\n"
-    "3. Entry price\n"
-    "4. Stop loss\n"
-    "5. Take profit\n"
-    "6. Time in force",
+    + "\n\nYou are generating trade orders for CRYPTO (Solana/SOL) on Jupiter DEX."
+    "\nWhen you receive a message, it will contain:"
+    "\n- Real market data (current SOL price, wallet balance)"
+    "\n- Thesis from Director + Risk Assessment"
+    "\n\nGenerate trade order including:"
+    "\n1. Action: BUY (swap USDC→SOL) or SELL (swap SOL→USDC)"
+    "\n2. Amount in USD (max $0.50 per trade)"
+    "\n3. Entry price (use REAL current price from market data)"
+    "\n4. Stop loss"
+    "\n5. Take profit"
+    "\n6. Reasoning (1-2 sentences)",
 )
 
 quant_agent = Agent(
     name="Quant-Analyst",
     system_prompt=QUANT_PROMPT.strip()
-    + "\n\nWhen you receive a message, it will contain:\n"
-    "Stock and Thesis from your Director.\n\n"
-    "Generate quantitative analysis with: ticker, technical_score (0-1), "
-    "volume_score (0-1), trend_strength (0-1), volatility, "
-    "probability_score (0-1), key_levels (support, resistance, pivot).",
+    + "\n\nYou are analyzing CRYPTO assets (primarily Solana/SOL, but also BTC and ETH for context)."
+    "\nWhen you receive a message, it will contain:"
+    "\n- Real market data (prices, 24h/7d/30d changes, volume, market cap)"
+    "\n- Director's thesis"
+    "\n\nGenerate quantitative analysis with:"
+    "\n- technical_score (0-1)"
+    "\n- volume_score (0-1)"
+    "\n- trend_strength (0-1)"
+    "\n- volatility"
+    "\n- probability_score (0-1)"
+    "\n- key_levels (support, resistance, pivot)"
+    "\n\nUse the REAL prices provided. Do not invent price data.",
 )
-
-ALL_AGENTS = [sentiment_agent, risk_agent, execution_agent, quant_agent]
 
 director_agent = Agent(
     name="Trading-Director",
-    system_prompt=DIRECTOR_PROMPT,
+    system_prompt=DIRECTOR_PROMPT.strip()
+    + "\n\nYou are a CRYPTO Trading Director specializing in Solana (SOL)."
+    "\nYou receive REAL market data — use it. Do NOT invent prices."
+    "\nYour thesis must include:"
+    "\n1. Market direction (bullish/bearish/neutral)"
+    "\n2. Key support/resistance levels (use REAL prices from data)"
+    "\n3. Recommended action (BUY SOL / SELL SOL / HOLD)"
+    "\n4. Risk factors",
 )
 
 
@@ -157,41 +174,76 @@ director_agent = Agent(
 def run_full_cycle(task: str) -> Dict[str, Any]:
     """
     Executa o pipeline completo: Director → Quant → Risk → Execution.
+    Injeta dados reais de mercado antes de cada ciclo.
     Retorna dict com resultados de cada etapa.
     """
     from loguru import logger
 
+    # 1. Busca dados reais de mercado
+    logger.info("Buscando dados reais de mercado...")
+    market_data = fetch_all_market_data()
+    logger.success(f"Dados obtidos: SOL ${_extract_sol_price(market_data)}")
+
     results: Dict[str, Any] = {
         "task": task,
         "timestamp": _NOW.isoformat(),
+        "market_data_snapshot": market_data,
         "steps": {},
     }
 
-    # Step 1: Director gera tese
-    logger.info("Director Agent: gerando tese de mercado...")
-    director_output = director_agent.run(task)
-    results["steps"]["director"] = director_output
-    logger.success("Director concluído")
+    # 2. Director gera tese (com dados reais + retry)
+    director_output = ""
+    for attempt in range(MAX_DIRECTOR_RETRIES + 1):
+        logger.info(f"Director Agent: gerando tese de mercado (tentativa {attempt + 1})...")
+        director_prompt = (
+            f"Task: {task}\n\n"
+            f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+            f"Analise os dados REAIS acima. Use os preços e variações fornecidos."
+        )
+        director_output = director_agent.run(director_prompt)
 
-    # Step 2: Quant analisa
+        if len(director_output.strip()) > 100:
+            logger.success("Director concluído com tese válida")
+            break
+        else:
+            logger.warning(f"Director retornou saída muito curta ({len(director_output)} chars), tentando novamente...")
+            if attempt < MAX_DIRECTOR_RETRIES:
+                time.sleep(2)
+
+    results["steps"]["director"] = director_output
+
+    # 3. Quant analisa (com dados reais)
     logger.info("Quant Agent: analisando...")
-    quant_output = quant_agent.run(f"Task: {task}\n\nThesis from Director:\n{director_output}")
+    quant_prompt = (
+        f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+        f"## Tese do Director:\n{director_output}\n\n"
+        f"Faça análise quantitativa usando os preços REAIS fornecidos acima."
+    )
+    quant_output = quant_agent.run(quant_prompt)
     results["steps"]["quant"] = quant_output
     logger.success("Quant concluído")
 
-    # Step 3: Risk avalia
+    # 4. Risk avalia (com contexto do portfólio)
     logger.info("Risk Manager: avaliando risco...")
-    risk_output = risk_agent.run(
-        f"Stock: General Market\nThesis: {director_output}\nQuant Analysis: {quant_output}"
+    risk_prompt = (
+        f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+        f"## Tese do Director:\n{director_output}\n\n"
+        f"## Análise Quantitativa:\n{quant_output}\n\n"
+        f"Avalie o risco considerando o saldo REAL da carteira e o histórico de trades."
     )
+    risk_output = risk_agent.run(risk_prompt)
     results["steps"]["risk"] = risk_output
     logger.success("Risk Manager concluído")
 
-    # Step 4: Execution gera ordem (apenas recomendação, sem executar)
+    # 5. Execution gera recomendação (com preço real)
     logger.info("Execution Agent: gerando recomendação...")
-    exec_output = execution_agent.run(
-        f"Stock: General Market\nThesis: {director_output}\nRisk Assessment: {risk_output}"
+    exec_prompt = (
+        f"## DADOS REAIS DE MERCADO:\n{market_data}\n\n"
+        f"## Tese do Director:\n{director_output}\n\n"
+        f"## Avaliação de Risco:\n{risk_output}\n\n"
+        f"Gere a ordem de trade usando o preço REAL atual."
     )
+    exec_output = execution_agent.run(exec_prompt)
     results["steps"]["execution"] = exec_output
     logger.success("Execution concluído")
 
@@ -199,6 +251,12 @@ def run_full_cycle(task: str) -> Dict[str, Any]:
     return results
 
 
+def _extract_sol_price(market_data: str) -> str:
+    """Extrai o preço SOL do texto de market data."""
+    match = re.search(r"SOL: \$([\d.]+)", market_data)
+    return match.group(1) if match else "?"
+
+
 if __name__ == "__main__":
-    result = run_full_cycle("Analyze the crypto market and provide a thesis on current trends and opportunities.")
+    result = run_full_cycle("Analise o mercado de criptomoedas com foco em Solana. Forneça tese de mercado, níveis-chave e recomendação de trade.")
     print(json.dumps(result, indent=2, ensure_ascii=False))
