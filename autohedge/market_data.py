@@ -162,6 +162,58 @@ def _get_sol_tvl() -> Dict[str, Any]:
         return {}
 
 
+def _get_crypto_news() -> list:
+    """Busca notícias de crypto via RSS (CoinTelegraph + Decrypt)."""
+    import xml.etree.ElementTree as ET
+
+    feeds = [
+        ("CoinTelegraph", "https://cointelegraph.com/rss"),
+        ("Decrypt", "https://decrypt.co/feed"),
+    ]
+
+    all_news = []
+    sol_keywords = ["solana", "sol ", "$sol", "solana生态", "jito", "marinade", "raydium", "jupiter"]
+
+    for source, url in feeds:
+        try:
+            resp = httpx.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            if resp.status_code != 200:
+                continue
+
+            root = ET.fromstring(resp.text)
+            items = root.findall(".//item") or root.findall(".//{http://www.w3.org/2005/Atom}entry")
+
+            for item in items[:20]:
+                title_el = item.find("title")
+                desc_el = item.find("description") or item.find("{http://www.w3.org/2005/Atom}summary")
+                title = title_el.text if title_el is not None else ""
+                if not title:
+                    title = ""
+                desc = desc_el.text if desc_el is not None else ""
+                # Strip HTML tags from description
+                import re
+                if desc:
+                    desc = re.sub(r"<[^>]+>", "", desc)[:200]
+                else:
+                    desc = ""
+
+                is_sol = any(kw in (title + desc).lower() for kw in sol_keywords)
+                all_news.append({
+                    "source": source,
+                    "title": title[:100],
+                    "summary": desc[:150],
+                    "sol_related": is_sol,
+                })
+        except Exception:
+            continue
+
+    # Prioritize SOL-related news
+    sol_news = [n for n in all_news if n["sol_related"]]
+    general_news = [n for n in all_news if not n["sol_related"]]
+
+    return sol_news[:5] + general_news[:5]
+
+
 def _get_trade_history() -> list:
     """Lê histórico de trades do portfolio/index.json."""
     index_path = os.path.join(os.path.dirname(__file__), "..", "portfolio", "index.json")
@@ -196,6 +248,7 @@ def fetch_all_market_data() -> str:
     trades = _get_trade_history()
     btc_eth = _get_btc_eth_prices()
     tvl = _get_sol_tvl()
+    news = _get_crypto_news()
 
     sol_price = prices.get("sol_usd", 0)
 
@@ -270,6 +323,21 @@ def fetch_all_market_data() -> str:
             lines.append(
                 f"- {t['date']} | {t['type']} | ${t['amount']} → ${t['out']:.4f} USDC | {t['status']}"
             )
+        lines.append("")
+
+    # Notícias
+    if news:
+        lines.append("## Notícias Recentes")
+        sol_news = [n for n in news if n.get("sol_related")]
+        if sol_news:
+            lines.append("### 🔵 Solana:")
+            for n in sol_news[:3]:
+                lines.append(f"  [{n['source']}] {n['title']}")
+        general = [n for n in news if not n.get("sol_related")]
+        if general:
+            lines.append("### 📰 Geral:")
+            for n in general[:3]:
+                lines.append(f"  [{n['source']}] {n['title']}")
         lines.append("")
 
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
