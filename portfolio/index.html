@@ -151,6 +151,7 @@ const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 let DEPOSITED_SOL = 0.02;
 let DEPOSITED_COUNT = 1;
+let DEPOSITED_USD = 0;
 
 async function fetchJSON(url) {
   const r = await fetch(url);
@@ -206,7 +207,8 @@ async function loadBalance(solPrice) {
       usdcBal = holdings.tokens[USDC_MINT].reduce((s, a) => s + parseFloat(a.uiAmountString || '0'), 0);
     }
     const totalUsd = (solBal * solPrice) + usdcBal;
-    const depositedValue = DEPOSITED_SOL * solPrice;
+    // P&L = current value - what was actually deposited (in USD at deposit time)
+    const depositedValue = DEPOSITED_USD || (DEPOSITED_SOL * solPrice);
     const pnl = totalUsd - depositedValue;
     const pnlPct = depositedValue > 0 ? (pnl / depositedValue) * 100 : 0;
 
@@ -219,7 +221,7 @@ async function loadBalance(solPrice) {
     pnlEl.className = 'value ' + (pnl >= 0 ? 'positive' : 'negative');
 
     document.getElementById('deposit-info').textContent =
-      `💸 ${DEPOSITED_COUNT} depósito(s): ${DEPOSITED_SOL.toFixed(6)} SOL (≈ $${depositedValue.toFixed(2)}) · Saldo: $${totalUsd.toFixed(2)} · Diferença: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
+      `💸 ${DEPOSITED_COUNT} depósito(s): ${DEPOSITED_SOL.toFixed(6)} SOL (≈ $${depositedValue.toFixed(2)} na época) · Saldo: $${totalUsd.toFixed(2)} · P&L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
   } catch(e) {
     console.error(e);
     document.getElementById('sol-balance').textContent = 'erro';
@@ -328,7 +330,9 @@ async function loadDeposits() {
       DEPOSITED_SOL = idx.deposits.reduce((s, d) => s + (d.amount || 0), 0);
     }
     DEPOSITED_COUNT = idx.deposits?.length || 1;
-    document.getElementById('pnl-sub').textContent = `vs. ${DEPOSITED_SOL.toFixed(6)} SOL depositado`;
+    // Use real USD value from deposit time (not current SOL price)
+    DEPOSITED_USD = idx.total_deposited_usd || 0;
+    document.getElementById('pnl-sub').textContent = `vs. $${DEPOSITED_USD.toFixed(2)} depositado (preço da época)`;
   } catch(e) { console.warn('index.json não encontrado'); }
 }
 

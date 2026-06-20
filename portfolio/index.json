@@ -1,0 +1,274 @@
+{
+  "deposits": [
+    {
+      "timestamp": "2026-06-16T14:30:00",
+      "asset": "SOL",
+      "amount": 0.02,
+      "note": "Dep\u00f3sito inicial",
+      "sol_price": 73.96,
+      "value_usd": 1.48
+    },
+    {
+      "timestamp": "2026-06-19T14:15:00",
+      "asset": "SOL",
+      "amount": 0.017427,
+      "note": "Dep\u00f3sito #2 via Binance",
+      "sol_price": 69.64,
+      "value_usd": 1.21
+    }
+  ],
+  "trades": [
+    {
+      "timestamp": "2026-06-16T14:50:00",
+      "status": "executed",
+      "amount_usd": 0.5,
+      "out_usdc": 0.500281,
+      "signature": "2DY7k7kAbFpRSuV4VegPSBPEAZXWF5f8GhFW8Dh1yae6FwG5zpNsD5rHbY8hfEjnAG2L72geDHXQtpo3k1M2JHmN",
+      "type": "direcional"
+    },
+    {
+      "timestamp": "2026-06-17T12:23:55.742051",
+      "status": "executed",
+      "amount_usd": 0.18,
+      "out_usdc": 0.179896,
+      "signature": "4v8YP9LduhFvfurowubiSPCW2tLE9ysRYRLkBqnBTLJ9soNQs7MT85RieHYxE326DtrSwQdYCYnrMKGmC4VAezz3",
+      "sol_price": 0
+    },
+    {
+      "timestamp": "2026-06-19T18:04:15.935132",
+      "status": "executed",
+      "amount_usd": 0.5,
+      "out_usdc": 0.500084,
+      "signature": "2Jcb8GJW7fL4QtTD2dSrbvLagyD6ZuQugLQMTJs6vMZeLo5hcWuzoBx27o71jPFtXL8Nw21XCMmASqwE7ZCbGtVo",
+      "sol_price": 0
+    },
+    {
+      "timestamp": "2026-06-20T00:04:22.815095",
+      "status": "executed",
+      "amount_usd": 0.5,
+      "out_usdc": 0.499958,
+      "signature": "3uku7Ft5XiQBdirEZikCpV5E2Ms9425EXa4Pvr7LBZ8XLoF9Jwcx39ZxTDzvQ3FaQmyZJXZJBL5NFCYKfvqDpS69",
+      "sol_price": 0
+    },
+    {
+      "timestamp": "2026-06-20T12:05:15.774858",
+      "status": "executed",
+      "amount_usd": 0.5,
+      "out_usdc": 0.49996,
+      "signature": "xNnm8Dq6745DAqpiR7Be1iRaZyh34bkbTUTMTTFEhK3MGL6kgk1Btnh7Hh7t79GCTKoBMERiwxqR3A8tGktZNN6",
+      "sol_price": 0
+    },
+    {
+      "timestamp": "2026-06-20T18:03:40.801299",
+      "status": "executed",
+      "amount_usd": 0.5,
+      "out_usdc": 0,
+      "signature": "5YhHZ4SCAmroentWEeRZRD5aFfzvNKixx79YAWioWmG2hEQktBzMRwn5BGYMwFq8VXmRFwK6SC5yXpsjXTRdmSNV",
+      "sol_price": 0,
+      "out_sol": 0.00697,
+      "direction": "buy",
+      "type": "directional"
+    }
+  ],
+  "analyses": [
+    {
+      "timestamp": "2026-06-16T15:05:00",
+      "file": "analise_20260616_150711.json",
+      "director_preview": "An\u00e1lise macro inicial",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-16T18:06:17.739607",
+      "file": "analise_20260616_180916.json",
+      "director_preview": "**Data e Hora do Cen\u00e1rio:** Ter\u00e7a-feira, 16 de Junho de 2026, 18:06 UTC.\n\n**Tese Macro Geral (Junho 2026)**\nO mercado de criptomoedas encontra-se numa **fase de corre\u00e7\u00e3o estrutural profunda** ap\u00f3s o s",
+      "trade_status": "error"
+    },
+    {
+      "timestamp": "2026-06-17T06:06:20.906042",
+      "file": "analise_20260617_060933.json",
+      "director_preview": "Excelente. Como Diretor de Trading, aqui est\u00e1 a minha an\u00e1lise aprofundada do mercado de criptomoedas para esta quarta-feira, 17 de junho de 2026.\n\n---\n\n## Tese de Mercado Macro (Junho/2026)\n\n**Context",
+      "trade_status": "error"
+    },
+    {
+      "timestamp": "2026-06-17T12:03:14.717730",
+      "file": "analise_20260617_120736.json",
+      "director_preview": "**Time Context:** Wednesday, June 17, 2026 | Mid-Cycle Correction Phase  \n**Primary Regime:** Post-Halving ~26 months out; 8 months past the cycle peak (assumed Oct 2025 top).  \n**Macro Anchor:** Glob",
+      "trade_status": "error"
+    },
+    {
+      "timestamp": "2026-06-17T12:15:52.264545",
+      "file": "analise_20260617_122020.json",
+      "director_preview": "**Subject:** Cryptocurrency Market Thesis \u2013 Late-Cycle Rotation & Institutional Maturation  \n**Date:** June 17, 2026  \n**Prepared by:** Trading Director AI\n\n---\n\n### Overall Market Thesis: The Great D",
+      "trade_status": "error"
+    },
+    {
+      "timestamp": "2026-06-17T12:20:43.262028",
+      "file": "analise_20260617_122351.json",
+      "director_preview": "Aqui est\u00e1 a an\u00e1lise de mercado e a tese para 17 de Junho de 2026.\n\n---\n\n## Tese de Mercado Cripto \u2013 17 de Junho de 2026\n\n### 1. Contexto Macro e Ciclo\n\nEstamos oficialmente na metade do ciclo p\u00f3s-halv",
+      "trade_status": "executed"
+    },
+    {
+      "timestamp": "2026-06-19T12:06:54.498910",
+      "file": "analise_20260619_121039.json",
+      "director_preview": "**DIRETOR DE TRADING \u2013 BRIEFING DE MERCADO**\n**Data:** Sexta-feira, 19 de Junho de 2026 \u2013 12:06 EST\n**Tese Central:** Mercado em Fase de Matura\u00e7\u00e3o P\u00f3s-Halving com Rota\u00e7\u00e3o de Capital para Fundamentos.\n",
+      "trade_status": "error"
+    },
+    {
+      "timestamp": "2026-06-19T13:29:07.177005",
+      "file": "analise_20260619_133243.json",
+      "director_preview": "**An\u00e1lise T\u00e9cnica de Meio de Semana | Sexta, 19 de Junho de 2026 | 13:29 ET**\n\n**Contexto Macro (Impacto da Quarta-feira)**\nEmbora estejamos na sexta, o corpo t\u00e9cnico da semana foi definido pelo CPI (",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:29:06.890743",
+      "file": "analise_20260619_133244.json",
+      "director_preview": "**DIRETORIA DE TRADING \u2013 BRIEFING DE FINAL DE SEMANA**\n**Data:** Sexta-feira, 19 de Junho de 2026 \u2013 13:29 EST\n\n---\n\n### TESE MACRO: O Mercado Est\u00e1 Comprado no Sil\u00eancio\n\nEncerramos a semana com um vi\u00e9s",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:29:07.195066",
+      "file": "analise_20260619_133400.json",
+      "director_preview": "",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:34:28.123350",
+      "file": "analise_20260619_133638.json",
+      "director_preview": "**Contexto da An\u00e1lise**\nEstamos em uma sexta-feira de alta volatilidade (19/06/2026), mas a an\u00e1lise a seguir adota o *tom conservador de quinta-feira*: prudente, focado na integridade dos suportes ant",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:34:28.246589",
+      "file": "analise_20260619_133757.json",
+      "director_preview": "Boa tarde, equipe. Segunda-feira est\u00e1 no retrovisor e fechamos a **sexta-feira, 19 de junho de 2026**, com um cen\u00e1rio que valida toda a nossa tese de recupera\u00e7\u00e3o.\n\n---\n\n### Tese de Mercado: Recupera\u00e7\u00e3",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:34:28.569470",
+      "file": "analise_20260619_133811.json",
+      "director_preview": "Absolutamente. Diretor de Trading aqui. Vou estruturar a an\u00e1lise no *tom de quarta-feira* \u2014 aquele momento da semana em que o mercado j\u00e1 mostrou suas cartas iniciais, os stops foram ca\u00e7ados, e a liqui",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:38:47.107456",
+      "file": "analise_20260619_134139.json",
+      "director_preview": "**Briefing de Pr\u00e9-Abertura | Mercados Americanos**\n**Data/Hora:** Sexta-feira, 19 de junho de 2026 \u2014 13:38 UTC (09:38 ET)\n**Evento Cr\u00edtico:** *Triple Witching* (Expira\u00e7\u00e3o Simult\u00e2nea de Futuros e Op\u00e7\u00f5e",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:51:47.475117",
+      "file": "analise_20260619_135423.json",
+      "director_preview": "A seguir, uma an\u00e1lise estruturada no formato de um Diretor de Trading. A data simulada \u00e9 **19 de Junho de 2026**.\n\n---\n\n## \ud83d\udccc Disclaimer Importante\n\nEsta an\u00e1lise \u00e9 uma simula\u00e7\u00e3o estrat\u00e9gica baseada no ",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T13:54:26.994159",
+      "file": "analise_20260619_135701.json",
+      "director_preview": "Absolutamente, Diretor. Segue a an\u00e1lise t\u00e1tica completa do ecossistema Solana (SOL) para o momento atual.\n\n---\n\n## Relat\u00f3rio de Diretoria: Solana (SOL)\n**Data/Hora Base:** Sexta-feira, 19 de Junho de ",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-19T18:00:56.676396",
+      "file": "analise_20260619_180414.json",
+      "director_preview": "",
+      "trade_status": "executed"
+    },
+    {
+      "timestamp": "2026-06-20T00:01:01.706318",
+      "file": "analise_20260620_000421.json",
+      "director_preview": "# An\u00e1lise do Mercado de Criptomoedas \u2014 20 de Junho de 2026\n\n## \ud83d\udcc9 Contexto Macro e Tese Central\n\nEstamos oficialmente em um **bear market maduro**. O ciclo de alta de 2024/2025 \u2014 impulsionado pelos ETF",
+      "trade_status": "executed"
+    },
+    {
+      "timestamp": "2026-06-20T06:00:54.985251",
+      "file": "analise_20260620_060515.json",
+      "director_preview": "",
+      "trade_status": "skipped"
+    },
+    {
+      "timestamp": "2026-06-20T12:00:55.336931",
+      "file": "analise_20260620_120514.json",
+      "director_preview": "Com base na minha an\u00e1lise estruturada como Trading Director AI, apresento abaixo a tese de mercado para **S\u00e1bado, 20 de Junho de 2026**.\n\n---\n\n## Tese Macro: A Fase de Re-Acumula\u00e7\u00e3o Estrutural\n\nO merc",
+      "trade_status": "executed"
+    },
+    {
+      "timestamp": "2026-06-20T18:00:53.730890",
+      "file": "analise_20260620_180339.json",
+      "director_preview": "",
+      "trade_status": "executed"
+    }
+  ],
+  "strategy": {
+    "name": "MA Bounce 1h",
+    "description": "MA20 (1h) \u2014 compra quando pre\u00e7o rejeita na m\u00e9dia, vende quando rompe",
+    "status": "active",
+    "candles_atual": 72,
+    "candles_necessarios": 21,
+    "ma20": 68.94,
+    "preco": 69.16,
+    "ultimo_sinal": "neutral",
+    "ultima_atualizacao": "2026-06-19T14:30:00"
+  },
+  "last_updated": "2026-06-19T14:15:00",
+  "ultima_previsao": {
+    "timestamp": "2026-06-20T18:00:53.730890",
+    "sentimento": "neutro",
+    "resumo": "N/A",
+    "arquivo": "analise_20260620_180339.json"
+  },
+  "historico_previsoes": [
+    {
+      "timestamp": "2026-06-19T13:34:28.246589",
+      "sentimento": "alta \ud83d\udcc8",
+      "arquivo": "analise_20260619_133757.json"
+    },
+    {
+      "timestamp": "2026-06-19T13:34:28.569470",
+      "sentimento": "alta \ud83d\udcc8",
+      "arquivo": "analise_20260619_133811.json"
+    },
+    {
+      "timestamp": "2026-06-19T13:38:47.107456",
+      "sentimento": "alta \ud83d\udcc8",
+      "arquivo": "analise_20260619_134139.json"
+    },
+    {
+      "timestamp": "2026-06-19T13:51:47.475117",
+      "sentimento": "alta \ud83d\udcc8",
+      "arquivo": "analise_20260619_135423.json"
+    },
+    {
+      "timestamp": "2026-06-19T13:54:26.994159",
+      "sentimento": "alta \ud83d\udcc8",
+      "arquivo": "analise_20260619_135701.json"
+    },
+    {
+      "timestamp": "2026-06-19T18:00:56.676396",
+      "sentimento": "neutro",
+      "arquivo": "analise_20260619_180414.json"
+    },
+    {
+      "timestamp": "2026-06-20T00:01:01.706318",
+      "sentimento": "alta \ud83d\udcc8",
+      "arquivo": "analise_20260620_000421.json"
+    },
+    {
+      "timestamp": "2026-06-20T06:00:54.985251",
+      "sentimento": "neutro",
+      "arquivo": "analise_20260620_060515.json"
+    },
+    {
+      "timestamp": "2026-06-20T12:00:55.336931",
+      "sentimento": "baixa \ud83d\udcc9",
+      "arquivo": "analise_20260620_120514.json"
+    },
+    {
+      "timestamp": "2026-06-20T18:00:53.730890",
+      "sentimento": "neutro",
+      "arquivo": "analise_20260620_180339.json"
+    }
+  ],
+  "total_deposited_sol": 0.037427,
+  "total_deposited_note": "0.037427 SOL (~$2.69)",
+  "total_deposited_usd": 2.69
+}
