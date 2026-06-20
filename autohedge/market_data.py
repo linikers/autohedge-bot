@@ -111,6 +111,57 @@ def _get_wallet_balance() -> Dict[str, Any]:
     return result
 
 
+def _get_btc_eth_prices() -> Dict[str, Any]:
+    """Busca preços de BTC e ETH via CoinGecko (gratuito)."""
+    try:
+        resp = httpx.get(
+            f"{COINGECKO}/simple/price",
+            params={
+                "ids": "bitcoin,ethereum",
+                "vs_currencies": "usd",
+                "include_24hr_change": "true",
+                "include_market_cap": "true",
+            },
+            timeout=10,
+        )
+        data = resp.json()
+        btc = data.get("bitcoin", {})
+        eth = data.get("ethereum", {})
+        return {
+            "btc_usd": btc.get("usd", 0),
+            "btc_change_24h": round(btc.get("usd_24h_change", 0), 2),
+            "btc_market_cap": btc.get("usd_market_cap", 0),
+            "eth_usd": eth.get("usd", 0),
+            "eth_change_24h": round(eth.get("usd_24h_change", 0), 2),
+            "eth_market_cap": eth.get("usd_market_cap", 0),
+        }
+    except Exception:
+        return {}
+
+
+def _get_sol_tvl() -> Dict[str, Any]:
+    """Busca TVL da Solana via DefiLlama (gratuito)."""
+    try:
+        resp = httpx.get(
+            "https://api.llama.fi/v2/historicalChainTvl/Solana",
+            timeout=10,
+        )
+        data = resp.json()
+        if data:
+            latest = data[-1]
+            # TVL de 7 dias atrás pra calcular variação
+            week_ago = data[-168] if len(data) >= 168 else data[0]
+            tvl_now = latest.get("tvl", 0)
+            tvl_week = week_ago.get("tvl", 0)
+            change = ((tvl_now - tvl_week) / tvl_week * 100) if tvl_week > 0 else 0
+            return {
+                "sol_tvl": tvl_now,
+                "sol_tvl_7d_change": round(change, 2),
+            }
+    except Exception:
+        return {}
+
+
 def _get_trade_history() -> list:
     """Lê histórico de trades do portfolio/index.json."""
     index_path = os.path.join(os.path.dirname(__file__), "..", "portfolio", "index.json")
@@ -143,6 +194,8 @@ def fetch_all_market_data() -> str:
     fg = _get_fear_greed()
     wallet = _get_wallet_balance()
     trades = _get_trade_history()
+    btc_eth = _get_btc_eth_prices()
+    tvl = _get_sol_tvl()
 
     sol_price = prices.get("sol_usd", 0)
 
@@ -155,6 +208,10 @@ def fetch_all_market_data() -> str:
     # Preços reais
     lines.append("## Preços Atuais")
     lines.append(f"- SOL: ${sol_price:.2f}")
+    if btc_eth.get("btc_usd"):
+        lines.append(f"- BTC: ${btc_eth['btc_usd']:,.2f} ({btc_eth.get('btc_change_24h', 0):+.2f}% 24h)")
+    if btc_eth.get("eth_usd"):
+        lines.append(f"- ETH: ${btc_eth['eth_usd']:,.2f} ({btc_eth.get('eth_change_24h', 0):+.2f}% 24h)")
     if changes.get("sol_high_24h"):
         lines.append(f"- SOL 24h High: ${changes['sol_high_24h']:.2f}")
     if changes.get("sol_low_24h"):
@@ -162,7 +219,7 @@ def fetch_all_market_data() -> str:
     lines.append("")
 
     # Variações
-    lines.append("## Variações")
+    lines.append("## Variações SOL")
     if changes.get("sol_change_24h") is not None:
         lines.append(f"- SOL 24h: {changes['sol_change_24h']:+.2f}%")
     if changes.get("sol_change_7d") is not None:
@@ -174,11 +231,21 @@ def fetch_all_market_data() -> str:
     # Volume e market cap
     if changes.get("sol_volume_24h"):
         vol = changes["sol_volume_24h"]
-        lines.append(f"- Volume 24h: ${vol:,.0f}")
+        lines.append(f"- Volume 24h SOL: ${vol:,.0f}")
     if changes.get("sol_market_cap"):
         mc = changes["sol_market_cap"]
-        lines.append(f"- Market Cap: ${mc:,.0f}")
+        lines.append(f"- Market Cap SOL: ${mc:,.0f}")
+    if btc_eth.get("btc_market_cap"):
+        lines.append(f"- Market Cap BTC: ${btc_eth['btc_market_cap']:,.0f}")
     lines.append("")
+
+    # TVL Solana
+    if tvl.get("sol_tvl"):
+        lines.append(f"## TVL Solana (DeFi)")
+        lines.append(f"- TVL: ${tvl['sol_tvl']:,.0f}")
+        if tvl.get("sol_tvl_7d_change"):
+            lines.append(f"- Variação 7d: {tvl['sol_tvl_7d_change']:+.2f}%")
+        lines.append("")
 
     # Fear & Greed
     if fg.get("fear_greed_value"):
