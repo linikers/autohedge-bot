@@ -128,7 +128,7 @@
 
   <div id="tab-trades" class="tab-content active">
     <table>
-      <thead><tr><th>Data</th><th>Operação</th><th>Valor</th><th>Status</th><th>TX</th></tr></thead>
+      <thead><tr><th>Data</th><th>Operação</th><th>Valor</th><th>Resultado</th><th>Status</th><th>TX</th></tr></thead>
       <tbody id="trade-table"></tbody>
     </table>
     <p style="text-align:center;color:#8b949e;padding:20px" id="trade-empty">Nenhum trade ainda</p>
@@ -152,6 +152,7 @@ const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 let DEPOSITED_SOL = 0.02;
 let DEPOSITED_COUNT = 1;
 let DEPOSITED_USD = 0;
+let CURRENT_SOL_PRICE = 0;
 
 async function fetchJSON(url) {
   const r = await fetch(url);
@@ -180,6 +181,7 @@ async function loadSolPrice() {
   try {
     const data = await fetchJSON(`${JUP_PRICE}?ids=${SOL_MINT}`);
     const price = data[SOL_MINT]?.usdPrice || 0;
+    CURRENT_SOL_PRICE = price;
     document.getElementById('sol-price').textContent = `$${price.toFixed(2)}`;
 
     // Try CoinGecko for 24h change
@@ -348,22 +350,40 @@ function renderTrades(trades) {
     const statusClass = t.status === 'executed' ? 'badge-ok' : t.status === 'skipped' ? 'badge-skip' : 'badge-err';
     const sig = t.signature || '';
 
-    // Determine direction from trade data
-    let direction = 'SOL→USDC';
-    let dirClass = 'badge-sell';
-    if (t.out_sol && t.out_sol > 0) {
-      direction = 'USDC→SOL';
-      dirClass = 'badge-buy';
-    } else if (t.type === 'bounce_buy' || t.direction === 'buy') {
-      direction = 'USDC→SOL';
-      dirClass = 'badge-buy';
+    // Determine direction
+    let direction = t.direction || '';
+    if (!direction) {
+      if ((t.out_usdc || 0) > 0 && (t.out_sol || 0) === 0) direction = 'sell';
+      else if ((t.out_sol || 0) > 0) direction = 'buy';
+    }
+
+    let dirLabel, dirClass;
+    if (direction === 'buy') {
+      dirLabel = 'USDC→SOL'; dirClass = 'badge-buy';
+    } else {
+      dirLabel = 'SOL→USDC'; dirClass = 'badge-sell';
+    }
+
+    // Calculate P&L per trade
+    let pnlText = '-', pnlClass = '';
+    const amount = t.amount_usd || 0;
+    if (direction === 'sell' && (t.out_usdc || 0) > 0) {
+      const pnl = t.out_usdc - amount;
+      pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(4)}`;
+      pnlClass = pnl >= 0 ? 'positive' : 'negative';
+    } else if (direction === 'buy' && (t.out_sol || 0) > 0 && CURRENT_SOL_PRICE > 0) {
+      const solValue = t.out_sol * CURRENT_SOL_PRICE;
+      const pnl = solValue - amount;
+      pnlText = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(4)}`;
+      pnlClass = pnl >= 0 ? 'positive' : 'negative';
     }
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${new Date(t.timestamp).toLocaleString('pt-BR')}</td>
-      <td><span class="badge ${dirClass}">${direction}</span></td>
-      <td>$${t.amount_usd?.toFixed(2) || '-'} → ${t.out_usdc?.toFixed(4) || t.out_sol?.toFixed(4) || '?'} ${t.out_sol ? 'SOL' : 'USDC'}</td>
+      <td><span class="badge ${dirClass}">${dirLabel}</span></td>
+      <td>$${amount.toFixed(2)} → ${direction === 'buy' ? (t.out_sol||0).toFixed(6) + ' SOL' : (t.out_usdc||0).toFixed(4) + ' USDC'}</td>
+      <td class="${pnlClass}" style="font-weight:600">${pnlText}</td>
       <td><span class="badge ${statusClass}">${t.status}</span></td>
       <td class="solscan">${sig ? `<a href="https://solscan.io/tx/${sig}" target="_blank">${sig.slice(0,12)}…</a>` : '-'}</td>
     `;

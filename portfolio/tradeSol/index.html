@@ -71,7 +71,7 @@
   </div>
 
   <table>
-    <thead><tr><th>Data</th><th>Operação</th><th>Valor</th><th>Status</th></tr></thead>
+    <thead><tr><th>Data</th><th>Operação</th><th>Valor</th><th>Resultado</th><th>Status</th></tr></thead>
     <tbody id="trade-table"></tbody>
   </table>
   <p style="text-align:center;color:#8b949e;padding:16px;font-size:13px" id="trade-empty">Nenhum trade ainda</p>
@@ -87,6 +87,7 @@ const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 let DEPOSITED_SOL = 0.02;
 let DEPOSITED_USD = 0;
+let CURRENT_SOL_PRICE = 0;
 
 async function fetchJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error(); return r.json(); }
 
@@ -97,6 +98,7 @@ async function loadMarket() {
       fetchJSON('https://api.alternative.me/fng/?limit=1').catch(() => null)
     ]);
     const price = priceData[SOL_MINT]?.usdPrice || 0;
+    CURRENT_SOL_PRICE = price;
     document.getElementById('sol-price').textContent = `$${price.toFixed(2)}`;
 
     // 24h change from CoinGecko
@@ -176,9 +178,29 @@ async function loadAll() {
       document.getElementById('trade-empty').style.display = 'none';
       trades.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
       trades.forEach(t => {
-        let dir = 'SOL→USDC', dirClass = 'badge-sell';
-        if (t.out_sol > 0 || t.direction === 'buy' || t.type === 'bounce_buy') { dir = 'USDC→SOL'; dirClass = 'badge-buy'; }
-        tbody.innerHTML += `<tr><td>${new Date(t.timestamp).toLocaleString('pt-BR')}</td><td><span class="badge ${dirClass}">${dir}</span></td><td>$${(t.amount_usd||0).toFixed(2)}</td><td><span class="badge badge-ok">${t.status}</span></td></tr>`;
+        let direction = t.direction || '';
+        if (!direction) {
+          if ((t.out_usdc || 0) > 0 && (t.out_sol || 0) === 0) direction = 'sell';
+          else if ((t.out_sol || 0) > 0) direction = 'buy';
+        }
+        let dir = direction === 'buy' ? 'USDC→SOL' : 'SOL→USDC';
+        let dirClass = direction === 'buy' ? 'badge-buy' : 'badge-sell';
+
+        // P&L per trade
+        let pnlText = '-', pnlClass = '';
+        const amount = t.amount_usd || 0;
+        if (direction === 'sell' && (t.out_usdc || 0) > 0) {
+          const pnl = t.out_usdc - amount;
+          pnlText = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(4);
+          pnlClass = pnl >= 0 ? 'positive' : 'negative';
+        } else if (direction === 'buy' && (t.out_sol || 0) > 0 && CURRENT_SOL_PRICE > 0) {
+          const solVal = t.out_sol * CURRENT_SOL_PRICE;
+          const pnl = solVal - amount;
+          pnlText = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(4);
+          pnlClass = pnl >= 0 ? 'positive' : 'negative';
+        }
+
+        tbody.innerHTML += `<tr><td>${new Date(t.timestamp).toLocaleString('pt-BR')}</td><td><span class="badge ${dirClass}">${dir}</span></td><td>$${(t.amount_usd||0).toFixed(2)}</td><td class="${pnlClass}" style="font-weight:600">${pnlText}</td><td><span class="badge badge-ok">${t.status}</span></td></tr>`;
       });
     }
   } catch(e) { document.getElementById('sol-balance').textContent = 'offline'; }
