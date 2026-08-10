@@ -22,32 +22,147 @@ from autohedge.agents import run_full_cycle
 
 def extract_signal(execution_output: str, risk_output: str) -> dict | None:
     """
-    Analisa a saída dos agentes e decide se deve executar trade.
-    Retorna dict com ação ou None se não for o momento.
+    Versão híbrida (25/06/2026):
+    1. Risk Agent aprovou? (condição necessária)
+    2. Extrair "Action:" do Execution Agent (sinal limpo, 8/10 análises)
+    3. Fallback: keyword matching (método original)
     """
-    text = execution_output.lower() + " " + risk_output.lower()
+    exec_lower = execution_output.lower()
+    risk_lower = risk_output.lower()
+    full_text = exec_lower + " " + risk_lower
 
-    # Verifica se o Risk Agent aprovou
-    risk_approved = any(w in text for w in ["approved", "favorável", "favoravel", "positivo", "positive", "executar", "go ahead", "proceed with"])
+    # 1. CHECAGEM: Risk Agent aprovou?
+    #    (09/08/2026: "não executar" contém "executar" — mesma armadilha do
+    #    "do not proceed". Negação de "executar" não conta como aprovação.)
+    risk_approved = any(w in full_text for w in [
+        "approved", "favorável", "favoravel", "positivo", "positive",
+        "executar", "go ahead", "proceed with"
+    ])
+    if "não executar" in full_text or "nao executar" in full_text or "sem executar" in full_text:
+        risk_approved = False
     if not risk_approved:
         return None
 
-    # Detecta direção
-    is_bullish = any(w in text for w in ["buy", "long", "comprar", "accumulate", "entrada", "alta", "bullish", "optimistic", "otimista"])
-    is_bearish = any(w in text for w in ["sell", "short", "vender", "saída", "baixa", "bearish", "pessimistic", "cautela"])
+    # 2. SINAL LIMPO: Extrair label de ação do Execution Agent.
+    #    Suporta: "Action:", "AÇÃO:", "**Action:**", e célula de tabela markdown
+    #    "| **AÇÃO** | **HOLD** |" (10/08/2026: Execution usou rótulo PT "AÇÃO"
+    #    em tabela — o regex antigo action\s*: não casava e caía no fallback de
+    #    keywords, gerando SELL falso contra HOLD explícito + Risk REJECTED).
+    _ACTION_RE = re.compile(
+        r'(?:action|a[çc]ã?o)\s*:\s*\*{0,2}\s*(buy|sell|hold|compra|venda)'
+        r'|\|\s*\*{0,2}(?:a[çc]ã?o|action)\*{0,2}\s*\|\s*\*{0,2}(buy|sell|hold|compra|venda)',
+        re.IGNORECASE,
+    )
+    action_match = _ACTION_RE.search(execution_output)
+    if action_match:
+        action = (action_match.group(1) or action_match.group(2)).lower()
+        # mapeia valores PT → en
+        if action in ("compra",):
+            action = "buy"
+        elif action in ("venda",):
+            action = "sell"
+        # normaliza: se cair um valor não-hold inesperado, trata como hold seguro
+        if action not in ("buy", "sell"):
+            return None  # HOLD = não trade
+        return {
+            "action": action,
+            "reason": f"Execution Agent: Action: {action.upper()}"
+        }
 
-    if not is_bullish and not is_bearish:
-        return None  # Sinal neutro, não executa
+    # 2b. GUARD defensivo de HOLD: se o Execution explicitamente indicar HOLD /
+    #     "sem trade" mas de forma não capturada pelo regex acima, NÃO deixa o
+    #     fallback de keywords virar um trade falso (bug real 10/08/2026).
+    if re.search(r'\bhold\b', exec_lower) or "sem trade" in exec_lower or "não executar" in exec_lower:
+        return None
 
-    if is_bullish:
-        return {"action": "buy", "reason": "Sinal de alta detectado"}
+    # 3. FALLBACK: Keyword matching (método original)
+    #    (09/08/2026: word boundaries — "long" casava com "longo prazo" no risk output)
+    def _word_boundary(word: str) -> bool:
+        return re.search(r'\b' + re.escape(word) + r'\b', full_text) is not None
+
+    is_bullish = any(_word_boundary(w) for w in [
+        "buy", "long", "comprar", "accumulate", "entrada",
+        "bullish", "optimistic", "otimista"
+    ])
+    is_bearish = any(_word_boundary(w) for w in [
+        "sell", "short", "vender", "saída", "baixa",
+        "bearish", "pessimistic", "cautela"
+    ])
+
+    if is_bullish and not is_bearish:
+        return {"action": "buy", "reason": "Fallback: sinal de alta detectado"}
+    elif is_bearish and not is_bullish:
+        return {"action": "sell", "reason": "Fallback: sinal de baixa detectado"}
+    elif is_bullish and is_bearish:
+        # Ambos detectados — usar Risk Agent como desempate
+        risk_bullish = any(_word_boundary(w) for w in ["bullish", "buy", "comprar", "accumulate", "entrada"])
+        risk_bearish = any(_word_boundary(w) for w in ["bearish", "sell", "vender", "saída", "baixa"])
+        if risk_bearish and not risk_bullish:
+            return {"action": "sell", "reason": "Fallback: Risk Agent indica baixa"}
+        elif risk_bullish and not risk_bearish:
+            return {"action": "buy", "reason": "Fallback: Risk Agent indica alta"}
+        return None  # Ambíguos, não trade
+
+    return None  # Sinal neutro
+
+
+def get_wallet_balances() -> dict:
+    """Busca saldos reais da wallet (SOL + USDC) via RPC."""
+    import httpx
+    wallet = "GnVxCDFsqHx681WqKeKS97qiYGsB7M9Rf4C58WcgiLmQ"
+    rpc = os.getenv("HELIUS_RPC_URL", "https://api.mainnet-beta.solana.com")
+    result = {"sol": 0.0, "usdc": 0.0, "sol_price": 0.0}
+
+    try:
+        # SOL balance
+        resp = httpx.post(rpc, json={"jsonrpc": "2.0", "id": 1, "method": "getBalance", "params": [wallet]}, timeout=10)
+        result["sol"] = resp.json()["result"]["value"] / 1e9
+
+        # USDC balance
+        usdc_mint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        resp2 = httpx.post(rpc, json={"jsonrpc": "2.0", "id": 2, "method": "getTokenAccountsByOwner",
+            "params": [wallet, {"mint": usdc_mint}, {"encoding": "jsonParsed"}]}, timeout=10)
+        for acc in resp2.json().get("result", {}).get("value", []):
+            info = acc.get("account", {}).get("data", {}).get("parsed", {}).get("info", {})
+            result["usdc"] += float(info.get("tokenAmount", {}).get("uiAmount", 0))
+
+        # SOL price
+        price_resp = httpx.get("https://api.jup.ag/price/v3?ids=So11111111111111111111111111111111111111112", timeout=10)
+        result["sol_price"] = price_resp.json()["So11111111111111111111111111111111111111112"]["usdPrice"]
+    except Exception as e:
+        print(f"   ⚠️  Erro ao buscar saldos: {e}")
+
+    return result
+
+
+def calc_safe_max_usd(direction: str, configured_max: float) -> float:
+    """Calcula max-usd seguro baseado no saldo real da wallet."""
+    balances = get_wallet_balances()
+    sol_price = balances["sol_price"] or 72.0  # fallback
+
+    if direction == "buy":
+        # Comprar SOL com USDC — limitado pelo saldo USDC
+        available = balances["usdc"]
+        safe = max(0, available - 0.02)  # buffer pra gas
+        print(f"   📊 Saldo USDC: ${available:.2f} | Max config: ${configured_max}")
     else:
-        return {"action": "sell", "reason": "Sinal de baixa detectado"}
+        # Vender SOL por USDC — limitado pelo saldo SOL
+        sol_usd = balances["sol"] * sol_price
+        safe = max(0, sol_usd - 0.02)  # buffer pra rent-exempt
+        print(f"   📊 Saldo SOL: {balances['sol']:.6f} (${sol_usd:.2f}) | Max config: ${configured_max}")
+
+    final = min(configured_max, safe)
+    if final < configured_max:
+        print(f"   ⚠️  Max ajustado: ${configured_max} → ${final:.2f} (saldo insuficiente)")
+    else:
+        print(f"   ✅ Max: ${final:.2f}")
+
+    return round(max(final, 0), 2)
 
 
 def main():
     parser = argparse.ArgumentParser(description="AutoHedge Bot - Ciclo completo")
-    parser.add_argument("--task", default="Analyze the crypto market and provide a thesis on current trends and opportunities. Include analysis of Bitcoin, Ethereum, and Solana.")
+    parser.add_argument("--task", default="Analyze the crypto market and provide a thesis on current trends and opportunities. Include analysis of Bitcoin, Ethereum and Solana.")
     parser.add_argument("--notify", action="store_true")
     parser.add_argument("--output", default=None)
     parser.add_argument("--trade", action="store_true", help="Executa swap real após análise")
@@ -103,14 +218,19 @@ def main():
                 else:
                     kp = Keypair.from_base58_string(privkey)
                     direction = signal.get("action", "buy")
-                    if direction == "sell":
-                        print(f"   💱 Executando swap SOL → USDC (${max_trade})...")
-                        trade_result = swap_sol_to_usdc(amount_usd=max_trade, keypair=kp)
+                    # Calcula max-usd seguro baseado no saldo real
+                    safe_max = calc_safe_max_usd(direction, max_trade)
+                    if safe_max <= 0:
+                        print(f"   ❌ Saldo insuficiente pra trade ({direction})")
+                        trade_result = {"status": "error", "reason": "Saldo insuficiente"}
+                    elif direction == "sell":
+                        print(f"   💱 Executando swap SOL → USDC (${safe_max})...")
+                        trade_result = swap_sol_to_usdc(amount_usd=safe_max, keypair=kp)
                         trade_result["direction"] = "sell"
                         trade_result["type"] = "directional"
                     else:
-                        print(f"   💱 Executando swap USDC → SOL (${max_trade})...")
-                        trade_result = swap_usdc_to_sol(amount_usd=max_trade, keypair=kp)
+                        print(f"   💱 Executando swap USDC → SOL (${safe_max})...")
+                        trade_result = swap_usdc_to_sol(amount_usd=safe_max, keypair=kp)
                         trade_result["direction"] = "buy"
                         trade_result["type"] = "directional"
                     print(f"   Resultado: {trade_result.get('status', 'unknown')}")
