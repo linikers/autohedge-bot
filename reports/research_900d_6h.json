@@ -1,0 +1,282 @@
+{
+ "gerado_em": "2026-11-19T14:37:10Z",
+ "granularidade": "6h",
+ "dias_de_dados": 3600,
+ "periodo": [
+  "2024-06-02",
+  "2026-11-19"
+ ],
+ "custos": {
+  "fee_compra_pct": 0.1,
+  "fee_venda_pct": 0.3
+ },
+ "min_trades_oos": 30,
+ "resultados": [
+  {
+   "strategy": "ma_cross",
+   "configs_testados": 11,
+   "status": "reprovado",
+   "motivo": "amostra: 26 trades no OOS (m\u00ednimo 30)",
+   "oos": {
+    "trades": 26,
+    "wins": 11,
+    "win_rate": 42.31,
+    "total_return": -15.53,
+    "max_drawdown": 53.1,
+    "profit_factor": 0.0,
+    "exposure": 45.69
+   },
+   "monte_carlo_p": 0.286,
+   "buy_hold_oos": -57.27,
+   "folds": [
+    {
+     "fold": 1,
+     "trades": 15,
+     "wins": 6,
+     "win_rate": 40.0,
+     "total_return": -11.73,
+     "max_drawdown": 45.74,
+     "profit_factor": 0.94,
+     "exposure": 49.11
+    },
+    {
+     "fold": 2,
+     "trades": 6,
+     "wins": 3,
+     "win_rate": 50.0,
+     "total_return": -19.17,
+     "max_drawdown": 38.84,
+     "profit_factor": 0.35,
+     "exposure": 38.33
+    },
+    {
+     "fold": 3,
+     "trades": 5,
+     "wins": 2,
+     "win_rate": 40.0,
+     "total_return": 18.39,
+     "max_drawdown": 19.3,
+     "profit_factor": 2.09,
+     "exposure": 49.78
+    }
+   ],
+   "escolhidos": [
+    {
+     "fold": 1,
+     "params": {
+      "fast": 5,
+      "slow": 50
+     },
+     "train_return": 20.59,
+     "test_return": -11.73,
+     "configs_com_amostra": 4
+    },
+    {
+     "fold": 2,
+     "params": {
+      "fast": 50,
+      "slow": 100
+     },
+     "train_return": 48.46,
+     "test_return": -19.17,
+     "configs_com_amostra": 9
+    },
+    {
+     "fold": 3,
+     "params": {
+      "fast": 50,
+      "slow": 100
+     },
+     "train_return": 20.12,
+     "test_return": 18.39,
+     "configs_com_amostra": 9
+    }
+   ]
+  },
+  {
+   "strategy": "rsi_meanrev",
+   "configs_testados": 18,
+   "status": "reprovado",
+   "motivo": "amostra: 17 trades no OOS (m\u00ednimo 30)",
+   "oos": {
+    "trades": 17,
+    "wins": 8,
+    "win_rate": 47.06,
+    "total_return": -62.87,
+    "max_drawdown": 70.81,
+    "profit_factor": 0.0,
+    "exposure": 41.14
+   },
+   "monte_carlo_p": 0.9235,
+   "buy_hold_oos": -57.27,
+   "folds": [
+    {
+     "fold": 1,
+     "trades": 9,
+     "wins": 5,
+     "win_rate": 55.56,
+     "total_return": 6.22,
+     "max_drawdown": 34.57,
+     "profit_factor": 1.41,
+     "exposure": 30.11
+    },
+    {
+     "fold": 2,
+     "trades": 3,
+     "wins": 1,
+     "win_rate": 33.33,
+     "total_return": -49.58,
+     "max_drawdown": 63.99,
+     "profit_factor": 0.06,
+     "exposure": 66.56
+    },
+    {
+     "fold": 3,
+     "trades": 5,
+     "wins": 2,
+     "win_rate": 40.0,
+     "total_return": -30.67,
+     "max_drawdown": 37.63,
+     "profit_factor": 0.11,
+     "exposure": 26.78
+    }
+   ],
+   "escolhidos": [
+    {
+     "fold": 1,
+     "params": {
+      "period": 14,
+      "buy_below": 35,
+      "sell_above": 55
+     },
+     "train_return": 5.06,
+     "test_return": 6.22,
+     "configs_com_amostra": 9
+    },
+    {
+     "fold": 2,
+     "params": {
+      "period": 14,
+      "buy_below": 30,
+      "sell_above": 70
+     },
+     "train_return": 129.98,
+     "test_return": -49.58,
+     "configs_com_amostra": 15
+    },
+    {
+     "fold": 3,
+     "params": {
+      "period": 14,
+      "buy_below": 30,
+      "sell_above": 55
+     },
+     "train_return": 18.57,
+     "test_return": -30.67,
+     "configs_com_amostra": 16
+    }
+   ]
+  },
+  {
+   "strategy": "donchian",
+   "configs_testados": 7,
+   "status": "reprovado",
+   "motivo": "amostra: 20 trades no OOS (m\u00ednimo 30)",
+   "oos": {
+    "trades": 20,
+    "wins": 11,
+    "win_rate": 55.0,
+    "total_return": 42.01,
+    "max_drawdown": 32.68,
+    "profit_factor": 0.0,
+    "exposure": 22.94
+   },
+   "monte_carlo_p": 0.0465,
+   "buy_hold_oos": -57.27,
+   "folds": [
+    {
+     "fold": 1,
+     "trades": 12,
+     "wins": 5,
+     "win_rate": 41.67,
+     "total_return": 16.18,
+     "max_drawdown": 33.48,
+     "profit_factor": 1.58,
+     "exposure": 35.0
+    },
+    {
+     "fold": 2,
+     "trades": 3,
+     "wins": 2,
+     "win_rate": 66.67,
+     "total_return": -0.78,
+     "max_drawdown": 13.0,
+     "profit_factor": 0.98,
+     "exposure": 13.22
+    },
+    {
+     "fold": 3,
+     "trades": 5,
+     "wins": 4,
+     "win_rate": 80.0,
+     "total_return": 23.2,
+     "max_drawdown": 10.62,
+     "profit_factor": 4.69,
+     "exposure": 20.67
+    }
+   ],
+   "escolhidos": [
+    {
+     "fold": 1,
+     "params": {
+      "entry_n": 20,
+      "exit_n": 10
+     },
+     "train_return": 43.76,
+     "test_return": 16.18,
+     "configs_com_amostra": 1
+    },
+    {
+     "fold": 2,
+     "params": {
+      "entry_n": 55,
+      "exit_n": 10
+     },
+     "train_return": 68.64,
+     "test_return": -0.78,
+     "configs_com_amostra": 4
+    },
+    {
+     "fold": 3,
+     "params": {
+      "entry_n": 55,
+      "exit_n": 10
+     },
+     "train_return": 67.32,
+     "test_return": 23.2,
+     "configs_com_amostra": 6
+    }
+   ]
+  },
+  {
+   "strategy": "fear_trend",
+   "configs_testados": 18,
+   "status": "reprovado",
+   "motivo": "amostra: 0 trades no OOS (m\u00ednimo 30)",
+   "oos": {
+    "trades": 0,
+    "wins": 0,
+    "win_rate": 0.0,
+    "total_return": 0.0,
+    "max_drawdown": 0.0,
+    "profit_factor": 0.0,
+    "exposure": 0.0
+   },
+   "monte_carlo_p": null,
+   "buy_hold_oos": 0.0,
+   "folds": [],
+   "escolhidos": []
+  }
+ ],
+ "duracao_s": 14.3
+}
