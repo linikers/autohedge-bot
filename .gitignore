@@ -19,6 +19,7 @@ secrets/
 # Outputs
 outputs/*.json
 portfolio/paper_trades.json
+portfolio/research_cache/
 
 # IDE
 .vscode/
