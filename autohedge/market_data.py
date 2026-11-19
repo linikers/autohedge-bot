@@ -98,13 +98,26 @@ def _get_wallet_balance() -> Dict[str, Any]:
         pass
 
     try:
-        resp = httpx.get(
-            f"https://api.jup.ag/ultra/v1/holdings/{WALLET}",
+        resp = httpx.post(
+            "https://api.mainnet-beta.solana.com",
+            json={
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "getTokenAccountsByOwner",
+                "params": [WALLET, {"mint": USDC_MINT}, {"encoding": "jsonParsed"}],
+            },
             timeout=10,
         )
-        data = resp.json()
-        for token in data.get("tokens", {}).get(USDC_MINT, []):
-            result["usdc"] = round(token.get("uiAmount", 0), 4)
+        usdc = 0.0
+        for acc in resp.json().get("result", {}).get("value", []):
+            info = (
+                acc.get("account", {})
+                .get("data", {})
+                .get("parsed", {})
+                .get("info", {})
+            )
+            usdc += float(info.get("tokenAmount", {}).get("uiAmount", 0) or 0)
+        result["usdc"] = round(usdc, 4)
     except Exception:
         pass
 
@@ -309,11 +322,20 @@ def fetch_all_market_data() -> str:
         lines.append("")
 
     # Wallet
+    paper_equity = os.getenv("PAPER_EQUITY_USD", "").strip()
     lines.append("## Estado da Carteira")
-    lines.append(f"- SOL: {wallet['sol']:.6f} (~${wallet['sol'] * sol_price:.2f})")
-    lines.append(f"- USDC: ${wallet['usdc']:.4f}")
-    total = wallet['sol'] * sol_price + wallet['usdc']
-    lines.append(f"- Total: ~${total:.2f}")
+    if paper_equity:
+        # Modo paper: o agente decide como se tivesse este capital, sem tocar na
+        # carteira real. Sem isso, saldo de $0,21 faz o Execution responder HOLD
+        # sempre e o paper tracker nunca ganha amostra.
+        total = float(paper_equity)
+        lines.append(f"- MODO PAPER: capital simulado de ${total:.2f} (carteira real NÃO é usada)")
+        lines.append(f"- Qualquer ordem é uma decisão registrada, não uma execução")
+    else:
+        lines.append(f"- SOL: {wallet['sol']:.6f} (~${wallet['sol'] * sol_price:.2f})")
+        lines.append(f"- USDC: ${wallet['usdc']:.4f}")
+        total = wallet['sol'] * sol_price + wallet['usdc']
+        lines.append(f"- Total: ~${total:.2f}")
     lines.append("")
 
     # Histórico de trades
