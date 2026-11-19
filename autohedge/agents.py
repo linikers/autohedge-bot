@@ -38,8 +38,26 @@ MAX_DIRECTOR_RETRIES = 2
 
 # ── Client ───────────────────────────────────────────────────────────
 
+def _session_id() -> str:
+    """
+    A API do OpenCode (zen/go) passou a exigir o header x-opencode-session para
+    rotear a requisição; sem ele responde 400 MissingSessionID.
+
+    Um id por processo: o bot é um ciclo curto, então cada execução ganha a sua
+    sessão, reaproveitada pelas quatro chamadas do pipeline.
+    """
+    _id = os.getenv("OPENCODE_SESSION_ID")
+    if _id:
+        return _id
+    return f"autohedge-{os.getpid()}-{int(time.time())}"
+
+
 def _get_client() -> OpenAI:
-    return OpenAI(base_url=OPENCODE_BASE_URL, api_key=OPENCODE_API_KEY)
+    return OpenAI(
+        base_url=OPENCODE_BASE_URL,
+        api_key=OPENCODE_API_KEY,
+        default_headers={"x-opencode-session": _session_id()},
+    )
 
 
 # ── Agent base ───────────────────────────────────────────────────────
@@ -133,7 +151,7 @@ execution_agent = Agent(
     "\n- Thesis from Director + Risk Assessment"
     "\n\nGenerate trade order including:"
     "\n1. Action: BUY (swap USDC→SOL) or SELL (swap SOL→USDC)"
-    "\n2. Amount in USD (max $0.50 per trade)"
+    f"\\n2. Amount in USD (max ${os.getenv('MAX_TRADE_USD', '1.00')} per trade)"
     "\n3. Entry price (use REAL current price from market data)"
     "\n4. Stop loss"
     "\n5. Take profit"
