@@ -1,12 +1,24 @@
 # Environment
 .env
+.env.*
+!.env.example
 .venv/
 venv/
 __pycache__/
 *.pyc
 
+# Chaves e segredos (repo é público — nunca commitar)
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+secrets/
+*.bak
+
 # Outputs
 outputs/*.json
+portfolio/paper_trades.json
 
 # IDE
 .vscode/

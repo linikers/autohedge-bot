@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoHedge · tradeSol</title>
+<style>
+  :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #c9d1d9; --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+  .container { max-width: 700px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 2px; }
+  .subtitle { color: #8b949e; font-size: 13px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .card .label { font-size: 11px; color: #8b949e; text-transform: uppercase; margin-bottom: 2px; }
+  .card .value { font-size: 20px; font-weight: 600; }
+  .card .sub { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .positive { color: var(--green); } .negative { color: var(--red); } .neutral { color: var(--yellow); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 6px 10px; color: #8b949e; text-transform: uppercase; font-size: 11px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; }
+  .badge-ok { background: #1b3a22; color: var(--green); }
+  .badge-skip { background: #1c2128; color: var(--yellow); }
+  .badge-buy { background: #1b3a22; color: var(--green); }
+  .badge-sell { background: #3a1b1b; color: var(--red); }
+  a { color: var(--blue); text-decoration: none; font-family: monospace; font-size: 11px; }
+  .signal-badge { font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 6px; display: inline-block; }
+  .signal-buy { background: #1b3a22; color: var(--green); }
+  .signal-sell { background: #3a1b1b; color: var(--red); }
+  .signal-hold { background: #1c2128; color: var(--yellow); }
+  .fear-greed-bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--red), var(--yellow), var(--green)); position: relative; margin-top: 4px; }
+  .fear-greed-dot { width: 12px; height: 12px; border-radius: 50%; background: white; border: 2px solid var(--bg); position: absolute; top: -3px; transform: translateX(-50%); }
+  .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #484f58; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🤖 tradeSol</h1>
+  <div class="subtitle">AutoHedge Bot · <span id="last-update">-</span></div>
+
+  <!-- Market row -->
+  <div class="grid">
+    <div class="card" style="border-color:#58a6ff33">
+      <div class="label">💰 Preço SOL</div>
+      <div class="value" id="sol-price">-</div>
+      <div class="sub" id="sol-change">-</div>
+    </div>
+    <div class="card" style="border-color:#d2992233">
+      <div class="label">🌡️ Fear & Greed</div>
+      <div class="value" id="fg-value">-</div>
+      <div class="sub" id="fg-label">-</div>
+      <div class="fear-greed-bar"><div class="fear-greed-dot" id="fg-dot"></div></div>
+    </div>
+    <div class="card" style="border-color:#3fb95033">
+      <div class="label">🎯 Próxima Ação</div>
+      <div id="next-action" class="signal-badge signal-hold">HOLD</div>
+      <div class="sub" id="next-action-reason">aguardando</div>
+    </div>
+  </div>
+
+  <!-- Portfolio row -->
+  <div class="grid">
+    <div class="card"><div class="label">SOL</div><div class="value" id="sol-balance">-</div></div>
+    <div class="card"><div class="label">USDC</div><div class="value" id="usdc-balance">-</div></div>
+    <div class="card"><div class="label">💰 Portfolio</div><div class="value" id="total-usd">-</div></div>
+    <div class="card"><div class="label">📈 P&L</div><div class="value" id="pnl-usd">-</div></div>
+    <div class="card"><div class="label">🎯 Trades</div><div class="value" id="trade-count">-</div><div class="sub" id="trade-winrate">-</div></div>
+    <div class="card"><div class="label">💵 Volume</div><div class="value" id="total-swapped">-</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Data</th><th>Operação</th><th>Valor</th><th>Resultado</th><th>Status</th></tr></thead>
+    <tbody id="trade-table"></tbody>
+  </table>
+  <p style="text-align:center;color:#8b949e;padding:16px;font-size:13px" id="trade-empty">Nenhum trade ainda</p>
+
+  <div class="footer">AutoHedge Bot · MA Bounce Strategy · Solana</div>
+</div>
+
+<script>
+const JUP_PRICE = 'https://api.jup.ag/price/v3';
+const JUP_HOLDINGS = 'https://api.jup.ag/ultra/v1/holdings';
+const WALLET = 'GnVxCDFsqHx681WqKeKS97qiYGsB7M9Rf4C58WcgiLmQ';
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+let DEPOSITED_SOL = 0.02;
+let DEPOSITED_USD = 0;
+let CURRENT_SOL_PRICE = 0;
+
+async function fetchJSON(url) { const r = await fetch(url); if (!r.ok) throw new Error(); return r.json(); }
+
+async function loadMarket() {
+  try {
+    const [priceData, fgData] = await Promise.all([
+      fetchJSON(`${JUP_PRICE}?ids=${SOL_MINT}`),
+      fetchJSON('https://api.alternative.me/fng/?limit=1').catch(() => null)
+    ]);
+    const price = priceData[SOL_MINT]?.usdPrice || 0;
+    CURRENT_SOL_PRICE = price;
+    document.getElementById('sol-price').textContent = `$${price.toFixed(2)}`;
+
+    // 24h change from CoinGecko
+    try {
+      const cg = await fetchJSON('https://api.coingecko.com/api/v3/coins/solana?localization=false&tickers=false&community_data=false&developer_data=false');
+      const c24 = cg.market_data?.price_change_percentage_24h || 0;
+      const c7d = cg.market_data?.price_change_percentage_7d || 0;
+      const el = document.getElementById('sol-change');
+      el.textContent = `24h: ${c24 >= 0 ? '+' : ''}${c24.toFixed(2)}% · 7d: ${c7d >= 0 ? '+' : ''}${c7d.toFixed(2)}%`;
+      el.className = 'sub ' + (c24 >= 0 ? 'positive' : 'negative');
+    } catch(e) {}
+
+    // Fear & Greed
+    if (fgData?.data?.[0]) {
+      const val = parseInt(fgData.data[0].value);
+      document.getElementById('fg-value').textContent = `${val}/100`;
+      document.getElementById('fg-value').className = 'value ' + (val < 25 ? 'negative' : val < 50 ? 'neutral' : 'positive');
+      document.getElementById('fg-label').textContent = fgData.data[0].value_classification;
+      document.getElementById('fg-dot').style.left = `${val}%`;
+    }
+    return price;
+  } catch(e) { return 0; }
+}
+
+async function loadAll() {
+  document.getElementById('last-update').textContent = new Date().toLocaleString('pt-BR');
+  const solPrice = await loadMarket();
+
+  try {
+    const [holdings, idx] = await Promise.all([
+      fetchJSON(`${JUP_HOLDINGS}/${WALLET}`),
+      fetchJSON('index.json').catch(() => ({trades:[],deposits:[]}))
+    ]);
+
+    if (idx.total_deposited_sol) DEPOSITED_SOL = idx.total_deposited_sol;
+    else if (idx.deposits?.length) DEPOSITED_SOL = idx.deposits.reduce((s,d) => s + (d.amount||0), 0);
+    DEPOSITED_USD = idx.total_deposited_usd || 0;
+
+    const solBal = parseFloat(holdings.uiAmountString || '0');
+    let usdcBal = 0;
+    if (holdings.tokens?.[USDC_MINT]) usdcBal = holdings.tokens[USDC_MINT].reduce((s,a) => s + parseFloat(a.uiAmountString||'0'), 0);
+
+    const total = (solBal * solPrice) + usdcBal;
+    const deposited = DEPOSITED_USD || (DEPOSITED_SOL * solPrice);
+    const pnl = total - deposited;
+    const pnlPct = deposited > 0 ? (pnl / deposited) * 100 : 0;
+
+    document.getElementById('sol-balance').textContent = solBal.toFixed(4);
+    document.getElementById('usdc-balance').textContent = usdcBal.toFixed(2);
+    document.getElementById('total-usd').textContent = '$' + total.toFixed(2);
+    const pnlEl = document.getElementById('pnl-usd');
+    pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2) + ' (' + (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%)';
+    pnlEl.className = pnl >= 0 ? 'positive' : 'negative';
+
+    const trades = idx.trades || [];
+    document.getElementById('trade-count').textContent = trades.length;
+    document.getElementById('total-swapped').textContent = '$' + trades.reduce((s,t) => s + (t.amount_usd||0), 0).toFixed(2);
+
+    // Win rate
+    const wins = trades.filter(t => (t.out_usdc||0) > 0 && (t.out_usdc||0) >= (t.amount_usd||0)).length;
+    const losses = trades.filter(t => (t.out_usdc||0) > 0 && (t.out_usdc||0) < (t.amount_usd||0)).length;
+    if (wins + losses > 0) document.getElementById('trade-winrate').textContent = `${wins}W / ${losses}L (${((wins/(wins+losses))*100).toFixed(0)}%)`;
+
+    // Next action
+    const pred = idx.ultima_previsao;
+    if (pred) {
+      const sent = pred.sentimento || '';
+      const actEl = document.getElementById('next-action');
+      if (sent.includes('alta') || sent.includes('📈')) { actEl.textContent = 'BUY'; actEl.className = 'signal-badge signal-buy'; }
+      else if (sent.includes('baixa') || sent.includes('📉')) { actEl.textContent = 'SELL'; actEl.className = 'signal-badge signal-sell'; }
+    }
+
+    // Trades table
+    const tbody = document.getElementById('trade-table');
+    tbody.innerHTML = '';
+    if (trades.length) {
+      document.getElementById('trade-empty').style.display = 'none';
+      trades.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+      trades.forEach(t => {
+        let direction = t.direction || '';
+        if (!direction) {
+          if ((t.out_usdc || 0) > 0 && (t.out_sol || 0) === 0) direction = 'sell';
+          else if ((t.out_sol || 0) > 0) direction = 'buy';
+        }
+        let dir = direction === 'buy' ? 'USDC→SOL' : 'SOL→USDC';
+        let dirClass = direction === 'buy' ? 'badge-buy' : 'badge-sell';
+
+        // P&L per trade
+        let pnlText = '-', pnlClass = '';
+        const amount = t.amount_usd || 0;
+        if (direction === 'sell' && (t.out_usdc || 0) > 0) {
+          const pnl = t.out_usdc - amount;
+          pnlText = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(4);
+          pnlClass = pnl >= 0 ? 'positive' : 'negative';
+        } else if (direction === 'buy' && (t.out_sol || 0) > 0 && CURRENT_SOL_PRICE > 0) {
+          const solVal = t.out_sol * CURRENT_SOL_PRICE;
+          const pnl = solVal - amount;
+          pnlText = (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(4);
+          pnlClass = pnl >= 0 ? 'positive' : 'negative';
+        }
+
+        tbody.innerHTML += `<tr><td>${new Date(t.timestamp).toLocaleString('pt-BR')}</td><td><span class="badge ${dirClass}">${dir}</span></td><td>$${(t.amount_usd||0).toFixed(2)}</td><td class="${pnlClass}" style="font-weight:600">${pnlText}</td><td><span class="badge badge-ok">${t.status}</span></td></tr>`;
+      });
+    }
+  } catch(e) { document.getElementById('sol-balance').textContent = 'offline'; }
+}
+loadAll();
+setInterval(loadAll, 300000);
+</script>
+</body>
+</html>

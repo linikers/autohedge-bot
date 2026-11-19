@@ -1,0 +1,187 @@
+{
+ "generated_at": "2026-11-19T14:04:58Z",
+ "corpus": {
+  "analyses": 624,
+  "buy": 45,
+  "sell": 28,
+  "hold": 539,
+  "none": 12
+ },
+ "records": {
+  "total": 73,
+  "settled_24h": 73
+ },
+ "by_horizon": {
+  "1h": {
+   "n": 73,
+   "wins": 34,
+   "hit_pct": 46.58,
+   "expected_pct": 50.48,
+   "edge_pp": -3.9,
+   "markout_pct": 0.0296,
+   "base_up_pct": 52.05,
+   "p_value": 0.64,
+   "non_overlapping": {
+    "n": 67,
+    "wins": 31,
+    "hit_pct": 46.27,
+    "expected_pct": 51.17,
+    "edge_pp": -4.9,
+    "markout_pct": 0.0221,
+    "base_up_pct": 55.22,
+    "p_value": 0.6254
+   }
+  },
+  "4h": {
+   "n": 73,
+   "wins": 40,
+   "hit_pct": 54.79,
+   "expected_pct": 49.84,
+   "edge_pp": 4.95,
+   "markout_pct": 0.2348,
+   "base_up_pct": 49.32,
+   "p_value": 0.4828,
+   "non_overlapping": {
+    "n": 64,
+    "wins": 34,
+    "hit_pct": 53.12,
+    "expected_pct": 49.41,
+    "edge_pp": 3.71,
+    "markout_pct": 0.2379,
+    "base_up_pct": 46.88,
+    "p_value": 0.708
+   }
+  },
+  "24h": {
+   "n": 73,
+   "wins": 39,
+   "hit_pct": 53.42,
+   "expected_pct": 53.99,
+   "edge_pp": -0.56,
+   "markout_pct": 0.4117,
+   "base_up_pct": 67.12,
+   "p_value": 0.64,
+   "non_overlapping": {
+    "n": 36,
+    "wins": 18,
+    "hit_pct": 50.0,
+    "expected_pct": 52.31,
+    "edge_pp": -2.31,
+    "markout_pct": 0.2406,
+    "base_up_pct": 63.89,
+    "p_value": 1.0
+   }
+  }
+ },
+ "recent": [
+  {
+   "ts": "2026-08-18T13:01:12Z",
+   "action": "buy",
+   "price": 76.14,
+   "entry_agent": 75.2,
+   "markout_1h": 0.7749,
+   "markout_4h": 0.9325,
+   "markout_24h": 2.9025
+  },
+  {
+   "ts": "2026-08-18T08:02:01Z",
+   "action": "buy",
+   "price": 76.08,
+   "entry_agent": null,
+   "markout_1h": -0.2629,
+   "markout_4h": 0.1314,
+   "markout_24h": 1.643
+  },
+  {
+   "ts": "2026-08-18T05:01:20Z",
+   "action": "buy",
+   "price": 75.66,
+   "entry_agent": 75.72,
+   "markout_1h": 0.3569,
+   "markout_4h": 0.2908,
+   "markout_24h": 1.4142
+  },
+  {
+   "ts": "2026-08-18T00:00:25Z",
+   "action": "buy",
+   "price": 75.98,
+   "entry_agent": null,
+   "markout_1h": -0.5791,
+   "markout_4h": -0.2895,
+   "markout_24h": 1.1714
+  },
+  {
+   "ts": "2026-08-17T19:00:54Z",
+   "action": "buy",
+   "price": 75.75,
+   "entry_agent": 75.84,
+   "markout_1h": 0.2376,
+   "markout_4h": 0.264,
+   "markout_24h": 1.8218
+  },
+  {
+   "ts": "2026-08-12T02:19:10Z",
+   "action": "buy",
+   "price": 76.37,
+   "entry_agent": 76.5,
+   "markout_1h": -0.0262,
+   "markout_4h": -0.5238,
+   "markout_24h": -0.6285
+  },
+  {
+   "ts": "2026-08-11T12:07:57Z",
+   "action": "buy",
+   "price": 75.8,
+   "entry_agent": 75.4,
+   "markout_1h": 0.1979,
+   "markout_4h": -1.2401,
+   "markout_24h": 1.029
+  },
+  {
+   "ts": "2026-08-10T08:11:35Z",
+   "action": "buy",
+   "price": 76.88,
+   "entry_agent": 76.91,
+   "markout_1h": -0.4683,
+   "markout_4h": -0.3642,
+   "markout_24h": -1.3137
+  },
+  {
+   "ts": "2026-08-06T13:07:00Z",
+   "action": "sell",
+   "price": 73.16,
+   "entry_agent": 72.84,
+   "markout_1h": -0.3144,
+   "markout_4h": 0.0547,
+   "markout_24h": -1.2575
+  },
+  {
+   "ts": "2026-08-06T10:09:56Z",
+   "action": "sell",
+   "price": 73.23,
+   "entry_agent": 73.18,
+   "markout_1h": -0.2048,
+   "markout_4h": -0.2185,
+   "markout_24h": -0.3414
+  },
+  {
+   "ts": "2026-08-05T17:06:41Z",
+   "action": "buy",
+   "price": 74.47,
+   "entry_agent": 74.21,
+   "markout_1h": -0.0134,
+   "markout_4h": -0.564,
+   "markout_24h": -1.8128
+  },
+  {
+   "ts": "2026-08-04T09:07:39Z",
+   "action": "sell",
+   "price": 73.22,
+   "entry_agent": 73.19,
+   "markout_1h": -0.437,
+   "markout_4h": -0.4644,
+   "markout_24h": -0.9697
+  }
+ ],
+ "note": "markout = retorno na dire\u00e7\u00e3o apostada, bruto de custo. expected = acerto esperado se a dire\u00e7\u00e3o fosse aleat\u00f3ria com o mesmo mix long/short."
+}
